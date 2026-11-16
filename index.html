@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EMMABYBIT — Live Spot Signal Desk</title>
+<style>
+:root{--bg:#08111f;--panel:#101d30;--line:#20334c;--muted:#91a4bd;--text:#edf4ff;--green:#20d18b;--red:#ff5c70;--yellow:#f5c451;--blue:#5aa7ff}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(140deg,#07101d,#0d1c30);color:var(--text);font:14px system-ui,Segoe UI,Arial}
+header{padding:22px 4vw 16px;border-bottom:1px solid var(--line);display:flex;gap:15px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+h1{font-size:clamp(20px,4vw,30px);margin:0;letter-spacing:1px}h1 span{color:var(--green)}.sub{color:var(--muted);margin-top:5px}
+.wrap{padding:20px 4vw;max-width:1600px;margin:auto}.status{display:flex;gap:10px;align-items:center;color:var(--muted);flex-wrap:wrap}.dot{width:9px;height:9px;border-radius:50%;background:var(--yellow);display:inline-block}.dot.live{background:var(--green);box-shadow:0 0 12px var(--green)}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:12px;margin:18px 0}.card,.panel{background:rgba(16,29,48,.94);border:1px solid var(--line);border-radius:13px;padding:15px}.k{color:var(--muted);font-size:12px}.v{font-size:23px;font-weight:750;margin-top:7px}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0}.toolbar input,.toolbar select,button{background:#0b1728;color:var(--text);border:1px solid #2b4260;border-radius:8px;padding:10px 12px}button{cursor:pointer;background:#17395b}button:hover{border-color:var(--blue)}
+.panel{padding:0;overflow:hidden}.panelhead{padding:15px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1050px}th,td{text-align:left;padding:12px 13px;border-bottom:1px solid #1b2c42;white-space:nowrap}th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;background:#0d192a;position:sticky;top:0}tr.buy{background:rgba(32,209,139,.075)}tr.sell{background:rgba(255,92,112,.09)}tr:hover{background:#172943}
+.pill{display:inline-block;border-radius:20px;padding:5px 9px;font-weight:800;font-size:11px}.BUY{background:#123e32;color:#5cf0b1}.WATCH{background:#453918;color:#ffe08a}.SELL{background:#4b202c;color:#ff9aaa}.HOLD{background:#26364b;color:#b8c9df}
+.pos{color:var(--green)}.neg{color:var(--red)}.muted{color:var(--muted)}.spark{width:110px;height:30px}.reason{max-width:270px;white-space:normal;line-height:1.35;color:#c6d5e8}.small{font-size:11px;color:var(--muted)}.notice{margin-top:14px;padding:13px 15px;border:1px solid #594b27;background:#282316;border-radius:10px;color:#f4d98b;line-height:1.5}
+footer{color:var(--muted);font-size:12px;padding:20px 4vw 35px;line-height:1.6}.error{color:#ff9aaa}.green{color:var(--green)}
+@media(max-width:700px){.cards{grid-template-columns:repeat(2,1fr)}header{padding:17px 4vw}.v{font-size:19px}.wrap{padding:15px 3vw}}
+</style>
+</head>
+<body>
+<header><div><h1>EMMA<span>BYBIT</span> LIVE TRACKER</h1><div class="sub">Bybit Spot USDT • Public market data • No API key or wallet connection</div></div>
+<div class="status"><span id="dot" class="dot"></span><span id="connection">Connecting to Bybit…</span><span>·</span><span>Auto-refresh: 10 seconds</span></div></header>
+<main class="wrap">
+<div class="cards">
+ <div class="card"><div class="k">MARKETS SCANNED</div><div class="v" id="scanned">—</div></div>
+ <div class="card"><div class="k">BUY SIGNALS</div><div class="v green" id="buys">—</div></div>
+ <div class="card"><div class="k">SELL / EXIT WATCH</div><div class="v" id="sells">—</div></div>
+ <div class="card"><div class="k">LAST UPDATE</div><div class="v" style="font-size:17px" id="updated">—</div></div>
+</div>
+<div class="toolbar">
+ <input id="search" placeholder="Search coin e.g. DOGE" aria-label="Search coin">
+ <select id="filter"><option value="ALL">All signals</option><option value="BUY">BUY candidates</option><option value="WATCH">WATCH</option><option value="SELL">SELL / exit watch</option></select>
+ <select id="sort"><option value="score">Sort: Signal strength</option><option value="change">Sort: 24h gain</option><option value="volume">Sort: Volume</option></select>
+ <button id="refresh">↻ Refresh now</button><button id="pause">Pause refresh</button>
+</div>
+<section class="panel"><div class="panelhead"><strong>TOP LIVE USDT CANDIDATES</strong><span class="small" id="source">Loading live tickers…</span></div>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>Coin / Pair</th><th>Signal</th><th>Last price</th><th>24h change</th><th>24h volume (USDT)</th><th>Strength</th><th>Trend graphic</th><th>Suggested plan</th><th>Live reason</th></tr></thead><tbody id="rows"><tr><td colspan="10" class="muted">Waiting for Bybit market data…</td></tr></tbody></table></div></section>
+<div class="notice"><b>Important risk note:</b> Signals are rule-based market observations, not guaranteed predictions or personalised financial advice. A BUY label is a watchlist candidate, not an instruction to buy. Memecoins can lose value rapidly. Confirm liquidity, spread, project legitimacy and your own risk limit before trading. Suggested stop/target levels are illustrative calculations from the current price, not guaranteed execution prices.</div>
+<section class="panel" style="margin-top:15px;padding:15px"><b>How the signal works</b><p class="muted" style="line-height:1.6;margin-bottom:0">The tracker screens Bybit Spot USDT pairs whose names match a maintained meme-coin keyword list, then ranks candidates using 24-hour price movement and quote volume. BUY WATCH requires positive momentum and sufficient relative volume; SELL / EXIT WATCH flags sharp negative movement or a weakening candidate. Refreshing every 10 seconds updates the live ticker data. The trend sparkline is a compact visual of recent 24-hour change context, not a candlestick forecast.</p></section>
+</main>
+<footer>Data source: Bybit public market ticker endpoint. This page does not place orders, connect to your account, store credentials, or access your wallet. If Bybit is unreachable or browser network restrictions apply, the status area will show an error; retry later or open the page on a normal internet connection.</footer>
+<script>
+const API='https://api.bybit.com/v5/market/tickers?category=spot';
+const keywords=['DOGE','SHIB','PEPE','FLOKI','BONK','WIF','BOME','MEME','BRETT','POPCAT','MOG','TURBO','NEIRO','PONKE','MEW','GOAT','PNUT','ACT','WHY','BABYDOGE','ELON','LUNC','LADYS','CAT','PENGU','TOSHI','DEGEN','WOJAK','COQ','MYRO','SLERF','TRUMP','MELANIA','CHEEMS','CHILLGUY','HIPPO','BAN','SPX','GIGA','FWOG','MICHI','ANDY','KISHU','HOGE','SAMO','CATE','PIT','SNEK','APE'];
+let all=[], paused=false, timer=null;
+const $=id=>document.getElementById(id);
+function isMeme(s){return keywords.some(k=>s.startsWith(k)) && s.endsWith('USDT')}
+function n(v){return Number(v)||0}
+function fmt(v){if(!isFinite(v))return '—'; if(v>=1)return v.toLocaleString(undefined,{maximumFractionDigits:5});return v.toPrecision(5)}
+function compact(v){return v>=1e9?(v/1e9).toFixed(2)+'B':v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(0)}
+function evaluate(t){
+ const ch=n(t.price24hPcnt)*100, vol=n(t.turnover24h), price=n(t.lastPrice);
+ // Conservative screening score: positive momentum plus activity; extreme pumps are not automatically BUY.
+ let score=Math.max(0,Math.min(100,50+ch*1.25+Math.log10(Math.max(vol,1))*2));
+ let signal='HOLD',reason='Momentum is mixed; wait for a clearer setup.';
+ if(ch<=-8){signal='SELL';reason='Strong 24h decline ('+ch.toFixed(2)+'%); avoid catching a falling move.'}
+ else if(ch>=2 && ch<=18 && vol>=1000000){signal='BUY';reason='Positive 24h momentum with active USDT turnover; monitor for entry confirmation.'}
+ else if(ch>18){signal='WATCH';reason='Already surged '+ch.toFixed(2)+'% in 24h; chasing may expose you to a sharp pullback.'}
+ else if(ch>0 && vol>=250000){signal='WATCH';reason='Positive momentum, but wait for stronger volume or a cleaner breakout.'}
+ else if(ch<0){signal='WATCH';reason='Negative momentum; wait for price stabilisation before considering entry.'}
+ else {signal='WATCH';reason='Volume or momentum is currently below the tracker threshold.'}
+ const stop=price*.95, target=price*1.10;
+ return {...t,ch,vol,price,score,signal,reason,stop,target};
+}
+function spark(ch){let vals=[0, .12,.05,.22,.18,.32,.28,.44,.4,.55,.5,.7,.68,.85,1];if(ch<0)vals=vals.map(x=>1-x);let pts=vals.map((v,i)=>`${i*7},${27-v*23}`).join(' ');return `<svg class="spark" viewBox="0 0 100 30"><polyline points="${pts}" fill="none" stroke="${ch>=0?'#20d18b':'#ff5c70'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
+function plan(x){if(x.signal==='BUY')return `Entry watch ${fmt(x.price)}<br><span class="small">Illustrative stop ${fmt(x.stop)} · target ${fmt(x.target)}</span>`;if(x.signal==='SELL')return `Exit / avoid new entry<br><span class="small">Review position risk</span>`;return `Wait for confirmation<br><span class="small">No forced entry</span>`}
+function render(){
+ const q=$('search').value.trim().toUpperCase(), f=$('filter').value, sort=$('sort').value;
+ let arr=all.filter(x=>(!q||x.symbol.includes(q))&&(f==='ALL'||(f==='SELL'?x.signal==='SELL':x.signal===f)));
+ arr.sort((a,b)=>sort==='change'?b.ch-a.ch:sort==='volume'?b.vol-a.vol:b.score-a.score);
+ $('rows').innerHTML=arr.slice(0,15).map((x,i)=>`<tr class="${x.signal==='BUY'?'buy':x.signal==='SELL'?'sell':''}"><td>${i+1}</td><td><b>${x.symbol.replace('USDT','')}</b><div class="small">${x.symbol}</div></td><td><span class="pill ${x.signal}">${x.signal==='BUY'?'BUY WATCH':x.signal==='SELL'?'SELL WATCH':x.signal}</span></td><td>${fmt(x.price)}</td><td class="${x.ch>=0?'pos':'neg'}">${x.ch>=0?'+':''}${x.ch.toFixed(2)}%</td><td>$${compact(x.vol)}</td><td>${Math.round(x.score)}/100</td><td>${spark(x.ch)}</td><td>${plan(x)}</td><td class="reason">${x.reason}</td></tr>`).join('')||'<tr><td colspan="10" class="muted">No matching markets found.</td></tr>';
+ $('scanned').textContent=all.length;$('buys').textContent=all.filter(x=>x.signal==='BUY').length;$('sells').textContent=all.filter(x=>x.signal==='SELL').length;
+}
+async function load(){
+ $('connection').textContent='Updating live Bybit data…';
+ try{
+  const r=await fetch(API,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
+  const j=await r.json();if(j.retCode!==0)throw new Error(j.retMsg||'Bybit API response error');
+  all=(j.result.list||[]).filter(t=>isMeme(t.symbol)&&n(t.lastPrice)>0).map(evaluate).sort((a,b)=>b.score-a.score);
+  $('dot').classList.add('live');$('connection').textContent='LIVE • Bybit public data';$('source').textContent='Bybit Spot tickers · '+all.length+' matching pairs';
+  $('updated').textContent=new Date().toLocaleTimeString();render();
+ }catch(e){$('dot').classList.remove('live');$('connection').textContent='Connection issue';$('source').innerHTML='<span class="error">'+e.message+'</span>';if(!all.length)$('rows').innerHTML='<tr><td colspan="10" class="error">Could not load Bybit data. Check your connection and tap Refresh now.</td></tr>';}
+}
+function schedule(){if(timer)clearInterval(timer);if(!paused)timer=setInterval(load,10000)}
+$('refresh').onclick=load;$('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'Resume refresh':'Pause refresh';schedule()};
+['search','filter','sort'].forEach(id=>$(id).addEventListener(id==='search'?'input':'change',render));
+load();schedule();
+</script>
+</body></html>
